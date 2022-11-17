@@ -78,8 +78,12 @@ input:where([type="checkbox"], [type="radio"]):where(:active:not(:disabled), :fo
 } */
 
 .question-block {
-  width: 50vw;
   margin: auto;
+}
+@media only screen and (min-width: 576px) {
+  .question-block {
+    width: 50vw;
+  }
 }
 .question-block:not(.horizontal-rule) {
   box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175) !important;
@@ -136,11 +140,53 @@ input:where([type="checkbox"], [type="radio"]):where(:active:not(:disabled), :fo
 }
 
 .prev-button {
-  padding: 0.75rem 1.25rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 4px;
   border: 1px solid rgba(0, 0, 0, 0.1);
   background: rgb(0, 0, 0);
   color: white;
-  font-size: 20px;
-  text-transform: uppercase;
+  font-size: 15px;
+}
+
+/* register style */
+.register-container {
+  padding: 20px;
+  background-color: #f1f1f1;
+}
+
+input.register,
+input[type="reset"],
+input[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+input.register[type="checkbox"] {
+  flex-basis: 15%;
+  margin: 6px 0;
+}
+
+input[type="submit"] {
+  background-color: #04aa6d;
+  color: white;
+  border: none;
+}
+
+input.register[type="submit"]:hover {
+  opacity: 0.8;
+}
+
+.terms {
+  display: flex;
+  flex-direction: row-reverse;
+  font-size: 11px;
+  justify-content: space-between;
+  align-self: center;
+  align-self: center;
+  align-content: center;
+  margin: 16px 0;
 }
