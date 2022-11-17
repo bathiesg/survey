@@ -8,14 +8,14 @@ const Data = [
       {
         id: "q1opt1",
         value: "Sí",
-        isSelected: false
+        isSelected: false,
       },
       {
         id: "q1opt2",
         value: "No",
-        isSelected: false
-      }
-    ]
+        isSelected: false,
+      },
+    ],
   },
   {
     id: 2,
@@ -26,14 +26,14 @@ const Data = [
       {
         id: "q2opt1",
         value: "Casa unifamiliar",
-        isSelected: false
+        isSelected: false,
       },
       {
         id: "q2opt2",
         value: "Piso",
-        isSelected: false
-      }
-    ]
+        isSelected: false,
+      },
+    ],
   },
   {
     id: 3,
@@ -45,30 +45,87 @@ const Data = [
       {
         id: "q3opt1",
         value: "30€",
-        isSelected: false
+        isSelected: false,
       },
       {
         id: "q3opt2",
         value: "50€",
-        isSelected: false
+        isSelected: false,
       },
       {
         id: "q3opt3",
         value: "80€",
-        isSelected: false
+        isSelected: false,
       },
       {
         id: "q3opt4",
         value: "100€",
-        isSelected: false
+        isSelected: false,
       },
       {
         id: "q3opt4",
         value: "+100€",
-        isSelected: false
-      }
-    ]
-  }
+        isSelected: false,
+      },
+    ],
+  },
+  {
+    id: 4,
+    title: "Registro datos",
+    refName: "register",
+    isComplete: false,
+    options: [
+      {
+        id: "q4opt1",
+        value: "Nombre",
+        answer: "",
+        type: "text",
+        name: "name",
+      },
+      {
+        id: "q4opt2",
+        value: "Apellidos",
+        answer: "",
+        type: "text",
+        name: "lastname",
+      },
+      {
+        id: "q4opt3",
+        value: "Código postal",
+        answer: "",
+        type: "text",
+        name: "zipcode",
+      },
+      {
+        id: "q4opt4",
+        value: "Email",
+        answer: "",
+        type: "email",
+        name: "email",
+      },
+      {
+        id: "q4opt4",
+        value: "Número de Teléfono",
+        answer: "",
+        type: "tel",
+        name: "phone",
+      },
+      {
+        id: "q5opt4",
+        value: "Acepto la política de privacidad y los términos y condiciones.",
+        answer: false,
+        type: "checkbox",
+        name: "terms",
+      },
+      {
+        id: "q6opt4",
+        value: "Confirmar registro",
+        answer: "",
+        type: "submit",
+        name: "submit",
+      },
+    ],
+  },
 ];
 
 const getDataFromLocalStorage = (key, initialValue) => {
@@ -107,7 +164,7 @@ const handleResponse = ({ optionId, questionId }) => {
     if (currentQuestion.id === questionId) {
       currentQuestion = {
         ...currentQuestion,
-        isComplete: !currentQuestion.isComplete
+        isComplete: !currentQuestion.isComplete,
       };
       if (optionId) {
         currentQuestion.options = currentQuestion.options.map((option) => {
@@ -134,16 +191,17 @@ const submitAnswer = (e, questionId) => {
 
   handleResponse({
     questionId: questionId,
-    ...selectedOption
+    ...selectedOption,
   });
 };
+
 const goToPreviousQuestion = (e, prevQuestionId) => {
   console.log(prevQuestionId);
   let toggleCompleteQuestion = questionList.map((currentQuestion) => {
     if (currentQuestion.id === prevQuestionId) {
       currentQuestion = {
         ...currentQuestion,
-        isComplete: !currentQuestion.isComplete
+        isComplete: !currentQuestion.isComplete,
       };
     }
     return currentQuestion;
@@ -159,11 +217,40 @@ const onValueChange = (event, questionId) => {
   // };
   handleResponse({
     questionId: questionId,
-    optionId: event.target.id
+    optionId: event.target.id,
   });
 };
 
-const createOptionElement = (option, name, questionId) => {
+const validateRegister = (event, questionId) => {
+  event.preventDefault();
+
+  const inputs = [...document.querySelectorAll(".register")].map((input) => {
+    return {
+      id: input.id,
+      value: input.type === "checkbox" ? input.checked : input.value,
+    };
+  });
+  const targetQuestionIndex = questionList.findIndex(
+    (question) => question.id === questionId
+  );
+
+  questionList[targetQuestionIndex].isComplete =
+    !questionList[targetQuestionIndex].isComplete;
+  questionList[targetQuestionIndex].options = questionList[
+    targetQuestionIndex
+  ].options.map((option) => {
+    const updatedOption = inputs.find((input) => input.id === option.id);
+    if (updatedOption) option.answer = updatedOption.value;
+
+    return option;
+  });
+
+  storeDataToLocalStorage("survey", questionList);
+  window.location.reload();
+  console.table(inputs);
+};
+
+const createRadioOptionElement = (option, name, questionId) => {
   const container = document.createElement("div");
   const label = document.createElement("label");
   const input = document.createElement("input");
@@ -181,41 +268,64 @@ const createOptionElement = (option, name, questionId) => {
   return container;
 };
 
+const registerInput = (option, questionId) => {
+  const container = document.createElement("div");
+  const input = document.createElement("input");
+  input.className = "register";
+  input.name = option.name;
+  input.type = option.type;
+  input.id = option.id;
+  if (option.type === "checkbox") {
+    container.className = "terms";
+    container.textContent = option.value;
+    input.checked = option.answer ? "checked" : "";
+  } else if (option.type === "submit") {
+    input.value = option.value;
+    input.className = "";
+    input.addEventListener("click", (e) => validateRegister(e, questionId));
+  } else {
+    input.placeholder = option.value;
+    input.value = option.answer;
+  }
+  container.appendChild(input);
+
+  return container;
+};
+
 const optionsBuilder = (question) => {
   const optionsFragment = document.createDocumentFragment();
+  const fieldset = document.createElement("fieldset");
+  const isRegister = question.refName === "register";
+
   question.options.forEach((optionInput) =>
-    optionsFragment.appendChild(
-      createOptionElement(optionInput, question.refName, question.id)
-    )
+    isRegister
+      ? fieldset.appendChild(registerInput(optionInput, question.id))
+      : optionsFragment.appendChild(
+          createRadioOptionElement(optionInput, question.refName, question.id)
+        )
   );
 
+  if (isRegister) {
+    fieldset.className = "register-container";
+    optionsFragment.appendChild(fieldset);
+  }
   return optionsFragment;
 };
 
-const formBuilder = (question) => {
-  const questionBlock = document.createElement("div");
-  const form = document.createElement("form");
+const fieldsetBuilder = (question) => {
   const fieldset = document.createElement("fieldset");
   const legend = document.createElement("legend");
-  // const button = document.createElement("button");
 
   legend.textContent = question.title;
-  // button.className = "btn btn-default Submit-button";
-  // button.textContent = "submit";
-  // button.type = "submit";
+
+  fieldset.className = "question-block";
   fieldset.append(legend);
   fieldset.appendChild(optionsBuilder(question));
-  // fieldset.appendChild(button);
 
-  form.addEventListener("submit", (e) => submitAnswer(e, question.id));
-  form.appendChild(fieldset);
-  questionBlock.className = "question-block";
-  questionBlock.appendChild(form);
+  fieldset.addEventListener("submit", (e) => submitAnswer(e, question.id));
 
-  return questionBlock;
+  return fieldset;
 };
-
-const fragment = document.createDocumentFragment();
 
 const totalQuestions = questionList.length;
 const completedQuestions = questionList.filter((e) => e.isComplete);
@@ -223,7 +333,6 @@ const nomberOfCompletedQuestions = completedQuestions.length;
 const isAllCompleted = nomberOfCompletedQuestions === totalQuestions;
 const nextQuestion = questionList.find((e) => e.isComplete === false);
 const prevQuestion = completedQuestions[nomberOfCompletedQuestions - 1];
-console.log(prevQuestion);
 
 const buttonToGoToPrevoiusQuestion = (prevQuestionId) => {
   const prevButtonContainer = document.createElement("div");
@@ -239,20 +348,45 @@ const buttonToGoToPrevoiusQuestion = (prevQuestionId) => {
   return prevButtonContainer;
 };
 
+const form = document.createElement("form");
+form.id = "survey-form";
+
 if (isAllCompleted) {
-  questionList.forEach((currentQuestion, index) => {
-    fragment.appendChild(formBuilder(currentQuestion));
+  questionList.forEach((currentQuestion) => {
+    form.appendChild(fieldsetBuilder(currentQuestion));
   });
 } else {
-  fragment.appendChild(formBuilder(nextQuestion));
+  form.appendChild(fieldsetBuilder(nextQuestion));
   if (nomberOfCompletedQuestions >= 1) {
     console.log("entro aqui", nomberOfCompletedQuestions);
-    fragment.appendChild(buttonToGoToPrevoiusQuestion(prevQuestion.id));
+    form.appendChild(buttonToGoToPrevoiusQuestion(prevQuestion.id));
   }
 }
 
-// questionList.forEach((currentQuestion) => {
-//   fragment.appendChild(formBuilder(currentQuestion));
-// });
+document.getElementById("form-wrapper").appendChild(form);
 
-document.getElementById("form-wrapper").appendChild(fragment);
+if (isAllCompleted) {
+  // disable all fields after registration complete
+  [...document.querySelectorAll("fieldset")].map(
+    (currentFieldset) => (currentFieldset.disabled = true)
+  );
+
+  const resetButtonContainer = document.createElement("div");
+  resetButtonContainer.className = "question-block";
+  const resetButton = document.createElement("input");
+  resetButton.className = "reset";
+  resetButton.type = "reset";
+  resetButton.value = "Repetir la encuesta";
+  resetButton.addEventListener("click", () => {
+    localStorage.removeItem("survey");
+    window.location.reload();
+  });
+
+  resetButtonContainer.appendChild(resetButton);
+
+  document.getElementById("form-wrapper").appendChild(resetButtonContainer);
+}
+
+window.onbeforeunload = () => {
+  window.scrollTo(0, 0);
+};
